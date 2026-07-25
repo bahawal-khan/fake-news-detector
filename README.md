@@ -1,5 +1,7 @@
 # 🕵️ The Verification Desk — Fake News Detector
 
+🔗 **Live Demo:** [fake-news-detector-3wnfv6xfig3gk4ujww4mcq.streamlit.app](https://fake-news-detector-3wnfv6xfig3gk4ujww4mcq.streamlit.app)
+
 An end-to-end **classic Machine Learning** (no deep learning) fake news classifier:
 EDA → text preprocessing → feature engineering → TF-IDF vectorization → model
 comparison → FastAPI backend → React frontend.
