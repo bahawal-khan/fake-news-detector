@@ -11,39 +11,37 @@ Trained on the [Fake and Real News Dataset](https://www.kaggle.com/datasets/clme
 (Kaggle, ~44K articles). Best model: **Linear SVM** on TF-IDF (1–2 grams) +
 handcrafted linguistic features — **99.3% F1** on held-out test data.
 
+📁 Project Structure
 ---
-
-## 📁 Project Structure
-
 fake-news-detector/
-├── streamlit_app.py # ⭐ all-in-one deployment (currently live — see demo link above)
-├── requirements.txt # dependencies for the Streamlit deployment
+├── streamlit_app.py         # ⭐ all-in-one deployment (currently live — see demo link above)
+├── requirements.txt         # dependencies for the Streamlit deployment
 ├── backend/
-│ ├── app/
-│ │ ├── main.py # FastAPI app + routes (/predict, /health)
-│ │ ├── predict.py # loads artifacts, runs inference
-│ │ ├── preprocess.py # text cleaning + input-quality guard (shared everywhere)
-│ │ ├── features.py # handcrafted feature engineering (shared everywhere)
-│ │ ├── schemas.py # Pydantic request/response models
-│ │ └── model/ # saved vectorizer.pkl, scaler.pkl, model.pkl
-│ ├── pythonanywhere_app.py # Flask/WSGI version, for PythonAnywhere's free tier
-│ ├── requirements.txt
-│ └── Dockerfile
+│   ├── app/
+│   │   ├── main.py                # FastAPI app + routes (/predict, /health)
+│   │   ├── predict.py             # loads artifacts, runs inference
+│   │   ├── preprocess.py          # text cleaning + input-quality guard (shared everywhere)
+│   │   ├── features.py            # handcrafted feature engineering (shared everywhere)
+│   │   ├── schemas.py             # Pydantic request/response models
+│   │   └── model/                 # saved vectorizer.pkl, scaler.pkl, model.pkl
+│   ├── pythonanywhere_app.py      # Flask/WSGI version, for PythonAnywhere's free tier
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── frontend/
-│ ├── src/
-│ │ ├── App.jsx # main UI — "Verification Desk" (talks to the FastAPI backend)
-│ │ ├── api.js # axios client for the FastAPI backend
-│ │ └── components/
-│ │ ├── VerdictStamp.jsx
-│ │ └── ConfidenceMeter.jsx
-│ └── package.json
+│   ├── src/
+│   │   ├── App.jsx              # main UI — "Verification Desk" (talks to the FastAPI backend)
+│   │   ├── api.js               # axios client for the FastAPI backend
+│   │   └── components/
+│   │       ├── VerdictStamp.jsx
+│   │       └── ConfidenceMeter.jsx
+│   └── package.json
 ├── notebooks/
-│ ├── 01_eda.ipynb # exploratory data analysis
-│ ├── 02_feature_engineering_and_modeling.ipynb # features, TF-IDF, training, eval
-│ └── train_pipeline.py # same pipeline as a plain script
+│   ├── 01_eda.ipynb                              # exploratory data analysis
+│   ├── 02_feature_engineering_and_modeling.ipynb # features, TF-IDF, training, eval
+│   └── train_pipeline.py                         # same pipeline as a plain script
 ├── data/
-│ ├── Fake.csv
-│ └── True.csv
+│   ├── Fake.csv
+│   └── True.csv
 └── README.md
 
 **Three ways to run this project**, all sharing the exact same trained model and
