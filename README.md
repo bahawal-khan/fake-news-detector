@@ -11,8 +11,11 @@ Trained on the [Fake and Real News Dataset](https://www.kaggle.com/datasets/clme
 (Kaggle, ~44K articles). Best model: **Linear SVM** on TF-IDF (1–2 grams) +
 handcrafted linguistic features — **99.3% F1** on held-out test data.
 
-📁 Project Structure
 ---
+
+## 📁 Project Structure
+
+```
 fake-news-detector/
 ├── streamlit_app.py         # ⭐ all-in-one deployment (currently live — see demo link above)
 ├── requirements.txt         # dependencies for the Streamlit deployment
@@ -43,6 +46,7 @@ fake-news-detector/
 │   ├── Fake.csv
 │   └── True.csv
 └── README.md
+```
 
 **Three ways to run this project**, all sharing the exact same trained model and
 preprocessing/feature-engineering code:
