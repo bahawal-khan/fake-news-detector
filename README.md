@@ -1,10 +1,11 @@
 # 🕵️ The Verification Desk — Fake News Detector
 
 🔗 **Live Demo:** [fake-news-detector-3wnfv6xfig3gk4ujww4mcq.streamlit.app](https://fake-news-detector-3wnfv6xfig3gk4ujww4mcq.streamlit.app)
+*(Free tier — the app sleeps after 12h of inactivity. If you see a "wake up" screen, just click it and wait ~30–60s.)*
 
 An end-to-end **classic Machine Learning** (no deep learning) fake news classifier:
 EDA → text preprocessing → feature engineering → TF-IDF vectorization → model
-comparison → FastAPI backend → React frontend.
+comparison → deployable backend + frontend.
 
 Trained on the [Fake and Real News Dataset](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)
 (Kaggle, ~44K articles). Best model: **Linear SVM** on TF-IDF (1–2 grams) +
@@ -14,35 +15,48 @@ handcrafted linguistic features — **99.3% F1** on held-out test data.
 
 ## 📁 Project Structure
 
-```
 fake-news-detector/
+├── streamlit_app.py # ⭐ all-in-one deployment (currently live — see demo link above)
+├── requirements.txt # dependencies for the Streamlit deployment
 ├── backend/
-│   ├── app/
-│   │   ├── main.py          # FastAPI app + routes (/predict, /health)
-│   │   ├── predict.py       # loads artifacts, runs inference
-│   │   ├── preprocess.py    # text cleaning (shared with notebooks)
-│   │   ├── features.py      # handcrafted feature engineering (shared)
-│   │   ├── schemas.py       # Pydantic request/response models
-│   │   └── model/           # saved vectorizer.pkl, scaler.pkl, model.pkl
-│   ├── requirements.txt
-│   └── Dockerfile
+│ ├── app/
+│ │ ├── main.py # FastAPI app + routes (/predict, /health)
+│ │ ├── predict.py # loads artifacts, runs inference
+│ │ ├── preprocess.py # text cleaning + input-quality guard (shared everywhere)
+│ │ ├── features.py # handcrafted feature engineering (shared everywhere)
+│ │ ├── schemas.py # Pydantic request/response models
+│ │ └── model/ # saved vectorizer.pkl, scaler.pkl, model.pkl
+│ ├── pythonanywhere_app.py # Flask/WSGI version, for PythonAnywhere's free tier
+│ ├── requirements.txt
+│ └── Dockerfile
 ├── frontend/
-│   ├── src/
-│   │   ├── App.jsx              # main UI — "Verification Desk"
-│   │   ├── api.js               # axios client for the FastAPI backend
-│   │   └── components/
-│   │       ├── VerdictStamp.jsx
-│   │       └── ConfidenceMeter.jsx
-│   └── package.json
+│ ├── src/
+│ │ ├── App.jsx # main UI — "Verification Desk" (talks to the FastAPI backend)
+│ │ ├── api.js # axios client for the FastAPI backend
+│ │ └── components/
+│ │ ├── VerdictStamp.jsx
+│ │ └── ConfidenceMeter.jsx
+│ └── package.json
 ├── notebooks/
-│   ├── 01_eda.ipynb                              # exploratory data analysis
-│   ├── 02_feature_engineering_and_modeling.ipynb # features, TF-IDF, training, eval
-│   └── train_pipeline.py                         # same pipeline as a plain script
+│ ├── 01_eda.ipynb # exploratory data analysis
+│ ├── 02_feature_engineering_and_modeling.ipynb # features, TF-IDF, training, eval
+│ └── train_pipeline.py # same pipeline as a plain script
 ├── data/
-│   ├── Fake.csv
-│   └── True.csv
+│ ├── Fake.csv
+│ └── True.csv
 └── README.md
-```
+
+**Three ways to run this project**, all sharing the exact same trained model and
+preprocessing/feature-engineering code:
+
+1. **Streamlit (`streamlit_app.py`)** — one file, one deployment, no separate
+   frontend/backend. This is what's currently live (link above).
+2. **FastAPI + React (`backend/` + `frontend/`)** — the "real" production-style
+   split architecture, for local development or platforms that support Docker
+   (Render, Koyeb, Railway, etc.).
+3. **Flask (`backend/pythonanywhere_app.py`)** — a WSGI version of the same
+   API, specifically for PythonAnywhere's free tier (which doesn't support
+   FastAPI's ASGI).
 
 ---
 
@@ -62,8 +76,19 @@ fake-news-detector/
 
 ## 🚀 Running locally
 
-### 1. Backend (FastAPI)
+### Option A — Streamlit (simplest, one command)
 
+```bash
+pip install -r requirements.txt
+python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
+streamlit run streamlit_app.py
+```
+
+Opens automatically at http://localhost:8501
+
+### Option B — FastAPI backend + React frontend
+
+**Backend:**
 ```bash
 cd backend
 python -m venv venv
@@ -73,26 +98,23 @@ python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nl
 
 uvicorn app.main:app --reload --port 8000
 ```
-
 - API docs: http://localhost:8000/docs
 - Health check: http://localhost:8000/health
 
-> The `backend/app/model/` folder already contains trained artifacts
-> (`vectorizer.pkl`, `scaler.pkl`, `model.pkl`, `metadata.pkl`), so the API
-> works immediately — no retraining needed.
-
-### 2. Frontend (React + Vite)
-
+**Frontend:**
 ```bash
 cd frontend
 npm install
 cp .env.example .env      # set VITE_API_URL if backend isn't on localhost:8000
 npm run dev
 ```
-
 Open http://localhost:5173
 
-### 3. Retraining the model (optional)
+> The `backend/app/model/` folder already contains trained artifacts
+> (`vectorizer.pkl`, `scaler.pkl`, `model.pkl`, `metadata.pkl`), so both
+> options above work immediately — no retraining needed.
+
+### Retraining the model (optional)
 
 Either run the notebooks in order (`01_eda.ipynb` → `02_feature_engineering_and_modeling.ipynb`),
 or run the equivalent script directly:
@@ -103,30 +125,27 @@ pip install -r ../backend/requirements.txt jupyter nbconvert matplotlib seaborn 
 python train_pipeline.py
 ```
 
-Both regenerate the exact same artifacts consumed by the backend.
-
----
-
-## 🐳 Docker (backend)
-
-```bash
-cd backend
-docker build -t fake-news-api .
-docker run -p 8000:8000 fake-news-api
-```
+Both regenerate the exact same artifacts consumed by every deployment option above.
 
 ---
 
 ## ☁️ Deployment
 
-| Component | Suggested platform | Notes |
+This project is set up for **free, no-credit-card deployment** — here's what
+was actually used and what else works:
+
+| Component | Platform used | Why |
 |---|---|---|
-| Backend | Render / Railway | Point it at `backend/`, it will pick up the `Dockerfile` automatically. Set `PORT=8000`. |
-| Frontend | Vercel / Netlify | Point it at `frontend/`, build command `npm run build`, output dir `dist`. Set `VITE_API_URL` env var to your deployed backend URL. |
+| **Currently live** | **Streamlit Community Cloud** (`streamlit_app.py`) | Free, no card required, single-file deploy — GitHub repo → share.streamlit.io → point at `streamlit_app.py` → done. |
+| Backend alternative | **PythonAnywhere** (`backend/pythonanywhere_app.py`) | Free, no card required. Free tier only supports WSGI, so this is a Flask version of the same API — same model, same logic. |
+| Backend + Frontend (split architecture) | Render / Koyeb (backend, via `backend/Dockerfile`) + Vercel / Netlify (frontend) | These support the full FastAPI + React split, but most now require card verification even on free tiers — use only if you have a card, or if a currently-card-free provider is available when you deploy. |
+
+**Streamlit Cloud auto-redeploys** on every `git push` to `main` — no manual
+redeploy step needed once it's connected.
 
 ---
 
-## 📊 API Reference
+## 📊 API Reference (FastAPI / Flask versions)
 
 ### `POST /predict`
 
@@ -160,22 +179,25 @@ docker run -p 8000:8000 fake-news-api
 
 ## 🛡️ Input validation
 
-The API guards against bad input at two levels:
+The API guards against bad input at two levels (all three deployment
+versions — Streamlit, FastAPI, Flask — share this logic):
 
 1. **Wrong data type** (e.g. sending `"text": 123456789` as a raw JSON number
-   instead of a string) → Pydantic rejects it with a `422` error before it
-   ever reaches the model: `"Input should be a valid string"`.
+   instead of a string) → rejected before it ever reaches the model.
 2. **Valid string, but no real content** (e.g. pasting only digits, symbols,
    or gibberish — technically a string, since form/textarea inputs are
-   always strings) → after cleaning, the backend checks that at least 5 real
-   alphabetic words remain. If not, it returns a `400` error:
+   always strings) → after cleaning, a check confirms at least 5 real
+   alphabetic words remain. If not, a clear error is returned:
    `"This doesn't look like readable article text..."` instead of silently
    returning a misleading high-confidence prediction on empty/garbage input.
 
 ## ⚠️ Known limitations
 
 - Trained on 2016–2017 US political/world news — may not generalize well to
-  other domains, languages, or more recent misinformation styles.
+  other domains, languages, sources, or more recent misinformation styles.
+  Real-world articles that differ in topic or source from the training data
+  can occasionally be misclassified — this is an expected generalization
+  limit, not a bug.
 - `subject` and publication metadata were deliberately excluded (they caused
   leakage), so the model judges **writing style only**, not source credibility
   or fact-checking against real-world evidence.
@@ -187,6 +209,6 @@ The API guards against bad input at two levels:
 ## 🛠️ Tech Stack
 
 **ML:** scikit-learn, pandas, numpy, NLTK, TextBlob
-**Backend:** FastAPI, uvicorn, Pydantic
-**Frontend:** React 19, Vite, axios
-**Deployment:** Docker, Render/Railway (API), Vercel/Netlify (frontend)
+**Deployed as:** Streamlit (live demo)
+**Also included:** FastAPI + React (split architecture), Flask (PythonAnywhere-ready)
+**Deployment platforms used/supported:** Streamlit Community Cloud, PythonAnywhere, Docker, Render/Koyeb, Vercel/Netlify
